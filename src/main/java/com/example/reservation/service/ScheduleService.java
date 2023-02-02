@@ -7,13 +7,16 @@ import com.example.reservation.entity.Account;
 import com.example.reservation.entity.Room;
 import com.example.reservation.entity.Schedule;
 import com.example.reservation.repository.ScheduleRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ScheduleService {
 
     private final ScheduleRepository repo;
@@ -22,12 +25,17 @@ public class ScheduleService {
     //스케쥴을 조회합니다.
     //회의실ID가 조회 조건입니다.
     public List<ScheduleResponse> schedules(String id) {
-        return null;
+        return repo.findAllByRsvRm(Room.builder().rmId(Long.valueOf(id)).build()).stream()
+                .map(ScheduleResponse::new).collect(Collectors.toList());
     }
 
     //특정 스케쥴을 조회합니다.
     //스케쥴 ID가 조회 조건입니다.
     public ScheduleResponse detailSchedules(String id) {
+        Schedule schedule = repo.findById(Long.valueOf(id)).orElse(null);
+        if(schedule != null) {
+            return new ScheduleResponse(schedule);
+        }
         return null;
     }
 
@@ -35,13 +43,19 @@ public class ScheduleService {
     //성공:success, 실패:failed
     //고급 : 다른 스케쥴이 겹치지 않을때만 삽입하세요.
     public String insertSchedule(ScheduleInsertRequest req) {
+        repo.save(req.toEntity());
         return null;
     }
 
     //스케쥴을 삭제합니다.
     //성공:success, 실패:failed
     public String deleteSchedule(String id) {
-        return null;
+        try {
+            repo.deleteById(Long.valueOf(id));
+        }catch (Exception e) {
+            return "failed";
+        }
+        return "success";
     }
 
     //스케쥴을 수정합니다.
@@ -50,11 +64,5 @@ public class ScheduleService {
     public String updateSchedule(ScheduleUpdateRequest req) {
             return null;
 
-    }
-
-    // 필드 캡슐화
-    @Autowired
-    public ScheduleService(ScheduleRepository repo) {
-        this.repo = repo;
     }
 }
